@@ -3,7 +3,8 @@ Author: Lucas Hudson
 Summer 2021
 Project Name: Demand 2050
 File: main.py (main)
-Description: To explore different energy sources and which can be used to meet demand given constraints
+Description: To explore different energy sources and which can be
+used to meet demand given constraints
 
 TO-DO:
 1. What is the actual power output of a plant +
@@ -19,19 +20,29 @@ TO-DO:
 11. Add to github +
 """
 
-from energy_source import EnergySource
+from energy_source import EnergySource, NonrenewableSource
 import data
 
-print("testing")
-
 def main():
-    coal_plant = EnergySource(**data.coal)
+    coal_plant = NonrenewableSource(**data.coal)
     natural_gas_plant = EnergySource(**data.natural_gas)
-    onshore_wind_farm = EnergySource(**data.onshore_wind)
+    #onshore_wind_farm = EnergySource(**data.onshore_wind)
 
-    coal_plant.print_info()
-    natural_gas_plant.print_info()
-    onshore_wind_farm.print_info()
+    # coal_plant.print_info()
+    # natural_gas_plant.print_info()
+    # onshore_wind_farm.print_info()
+
+    # coal_plant.print_fuel_info()
+    # natural_gas_plant.print_fuel_info()
+    # onshore_wind_farm.print_fuel_info()
+
+    # coal_plant.print_power_info()
+    # natural_gas_plant.print_power_info()
+    # onshore_wind_farm.print_info()
     
+    coal_plant.print_cost_distribution_info(graph=True)
+    natural_gas_plant.print_cost_distribution_info(graph=True)
+    # onshore_wind_farm.print_info()
+
 if __name__ == "__main__":
     main()

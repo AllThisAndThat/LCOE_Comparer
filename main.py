@@ -7,6 +7,7 @@ Description: To explore different energy sources and which can be
 used to meet demand given constraints
 
 TO-DO:
+- Add a print all parameters method
 - Add GUI for data
 - Add Gui to enter data
 - Graph a hypothetical demand curve
@@ -18,14 +19,16 @@ TO-DO:
 - Addapt style standard
 """
 
-from energy_source import EnergySource, NonrenewableSource, RenewableSource
+from energy_source import EnergySource
 import data
 
 def main():
-    coal_plant = NonrenewableSource(**data.coal)
+    coal_plant = EnergySource(**data.coal)
     natural_gas_plant = EnergySource(**data.natural_gas)
-    onshore_wind_farm = RenewableSource(**data.onshore_wind)
+    onshore_wind_farm = EnergySource(**data.onshore_wind)
     min_test_source = EnergySource(**data.min_test)
+
+    # EnergySource.Print_num_sources()
 
     # coal_plant.print_info()
     # natural_gas_plant.print_info()
@@ -46,6 +49,11 @@ def main():
     # natural_gas_plant.print_cost_distribution_info(graph=True)
     # onshore_wind_farm.print_cost_distribution_info(graph=True)
     # min_test_source.print_cost_distribution_info(graph=True)
+
+    # coal_plant.print_efficiency_info()
+    # natural_gas_plant.print_efficiency_info()
+    # onshore_wind_farm.print_efficiency_info()
+    # min_test_source.print_efficiency_info()
 
 if __name__ == "__main__":
     main()

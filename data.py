@@ -39,3 +39,10 @@ onshore_wind = {
     'capacity': 100,
     'capacity_factor': 0.348    
 }
+
+min_test = {
+    'name': 'test test test',
+    'capacity': 200,
+    'capacity_factor': 0.22,   
+    'capital_cost': 1000
+}

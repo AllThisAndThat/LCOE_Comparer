@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 class EnergySource:
     """
-    Derives properties of energy sources from given properties
+    Derive properties of energy sources from given properties.
     
     Attributes:
     interest - the interest or discount rate as a percentage
@@ -25,17 +25,14 @@ class EnergySource:
     capacity_factor - actual / capacity (unitless)
     LCOE - the levelized cost of energy ($/MWh)
     num_of_sources - recond of instances
-    capital_term - capital cost after conversion ($/kWh)
-    fixed_term - fixed O&M after conversion ($/kWh)
-    variable_term - variable O&M after conversion ($/kWh)
     """
     num_of_sources = 0
     Industry_I = 5
     Industry_N = 20
 
     def __init__(self, *, name, capacity, capacity_factor,
-                 interest=Industry_I, year_num=Industry_N,
-                 capital_cost=0, F_O_and_M=0, V_O_and_M=0):
+                 capital_cost, interest=Industry_I, 
+                 year_num=Industry_N, F_O_and_M=0, V_O_and_M=0):
         """Set variables and derive properties."""
         self.name = name
         self.i = interest / 100
@@ -59,7 +56,13 @@ class EnergySource:
                 / (((1 + self.i)**self.n) - 1))
 
     def calc_LCOE(self):
-        """Calculate LCOE based on variety of costs."""
+        """
+        Calculate LCOE based on variety of costs.
+        
+        capital_term - capital cost after conversion ($/kWh)
+        fixed_term - fixed O&M after conversion ($/kWh)
+        variable_term - variable O&M after conversion ($/kWh)
+        """
         HOURS_PER_YEAR = 8760
         KWH_PER_MWH = 1000
         self.capital_term = ((self.capital_cost * self.CRF) 
@@ -71,7 +74,6 @@ class EnergySource:
                        + self.fixed_term 
                        + self.variable_term)
         self.LCOE = self.LCOE_kWh * KWH_PER_MWH
-
 
     def print_info(self):
         """Print general information of source."""
@@ -93,21 +95,21 @@ class EnergySource:
               f'{round(self.capacity * self.capacity_factor, 2)} MW')
         print('-' * 70)
 
-
     def print_cost_distribution_info(self, *, graph=False):
+        """Present different costs of a source. Graph as option."""
         print('-' * 70)
         print(f"Cost Distribution Information of '{self.name}' source")
-        print(f'Capital term: '
+        print(f'Capital: '
             f'{round((self.capital_term / self.LCOE_kWh) * 100, 2)}%')
-        print(f'Fixed term: '
+        print(f'Fixed: '
             f'{round((self.fixed_term / self.LCOE_kWh) * 100, 2)}%')
-        print(f'Variable term: '
+        print(f'Variable: '
             f'{round((self.variable_term / self.LCOE_kWh) * 100, 2)}%')
         print(f'Total LCOE: ${round(self.LCOE, 2)}/MWh')
         print('-' * 70)
 
         if graph:
-            labels = ('Capital Term', 'Fixed Term', 'Variable Term')
+            labels = ['Capital Term', 'Fixed Term', 'Variable Term']
             sizes = [self.capital_term, self.fixed_term,
                      self.variable_term]
             colors = ['orange', 'yellowgreen', 'lightcoral']
@@ -119,13 +121,13 @@ class EnergySource:
 
 
 class NonrenewableSource(EnergySource):
-    '''
-    Describes and derives properties of nonrenewable sources.
+    """
+    Describe and derive properties of nonrenewable sources.
     
     Attributes:
     fuel_price - cost for fuel ($/mmBTU)
     heat_rate - measure of efficiency (BTU/kwh)
-    '''
+    """
     Industry_I = EnergySource.Industry_I
     Industry_N = EnergySource.Industry_N
 
@@ -152,7 +154,6 @@ class NonrenewableSource(EnergySource):
 
     def calc_LCOE(self):
         """Calculate LCOE with source's properties including fuel."""
-
         HOURS_PER_YEAR = 8760
         KWH_PER_MWH = 1000
         BTU_PER_MMBTU = 1E6
@@ -178,20 +179,23 @@ class NonrenewableSource(EnergySource):
     def print_cost_distribution_info(self, *, graph=False):
         print('-' * 70)
         print(f"Cost Distribution Information of '{self.name}' source")
-        print(f'Capital term: '
-            f'{round((self.capital_term / self.LCOE_kWh) * 100, 2)}%')
-        print(f'Fixed term: '
-            f'{round((self.fixed_term / self.LCOE_kWh) * 100, 2)}%')
-        print(f'Variable term: '
-            f'{round((self.variable_term / self.LCOE_kWh) * 100, 2)}%')
-        print(f'Fuel term: '
-            f'{round((self.fuel_term / self.LCOE_kWh) * 100, 2)}%')
-        print(f'Total LCOE: ${round(self.LCOE, 2)}/MWh')
+        try:
+            print(f'Capital: '
+                f'{round((self.capital_term / self.LCOE_kWh) * 100, 2)}%')
+            print(f'Fixed: '
+                f'{round((self.fixed_term / self.LCOE_kWh) * 100, 2)}%')
+            print(f'Variable: '
+                f'{round((self.variable_term / self.LCOE_kWh) * 100, 2)}%')
+            print(f'Fuel: '
+                f'{round((self.fuel_term / self.LCOE_kWh) * 100, 2)}%')
+            print(f'Total LCOE: ${round(self.LCOE, 2)}/MWh')
+        except ZeroDivisionError:
+            print(f'Total LCOE: ${round(self.LCOE, 2)}/MWh')
         print('-' * 70)
-
+        
         if graph:
-            labels = ('Capital', 'Fixed', 'Variable',
-                       'Fuel')
+            labels = ['Capital', 'Fixed', 'Variable',
+                       'Fuel']
             sizes = [self.capital_term, self.fixed_term,
                     self.variable_term, self.fuel_term]
             colors = ['orange', 'yellowgreen', 'lightcoral',
@@ -201,3 +205,18 @@ class NonrenewableSource(EnergySource):
             plt.legend(labels, loc="best")
             plt.axis('equal')
             plt.show()
+
+
+class RenewableSource(EnergySource):
+    """Describe and derive properties of renewable sources."""
+    Industry_I = EnergySource.Industry_I
+    Industry_N = EnergySource.Industry_N
+
+    def __init__(self, *, name, capacity, capacity_factor,
+                 interest=Industry_I, year_num=Industry_N,
+                 capital_cost=0, F_O_and_M=0, V_O_and_M=0):
+
+        super().__init__(name=name, interest=interest, 
+            year_num=year_num, capital_cost=capital_cost,
+            F_O_and_M=F_O_and_M, V_O_and_M=V_O_and_M, 
+            capacity=capacity, capacity_factor=capacity_factor)

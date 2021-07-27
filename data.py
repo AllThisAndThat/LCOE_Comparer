@@ -41,11 +41,22 @@ onshore_wind = {
 }
 
 min_test = {
-    'name': 'test test test',
+    'name': 'Min Test',
     'capacity': 200,
     'capacity_factor': 0.22,
 }
 
 empty_test = {
-    
+
+}
+
+zero_test = {
+    'name': 1,
+    'capital_cost': 0,
+    'f_o_and_m': 0,
+    'v_o_and_m': 0,
+    'fuel_cost': 1.95,
+    'heat_rate': 4000,
+    'capacity': 100,
+    'capacity_factor': 0.5 
 }

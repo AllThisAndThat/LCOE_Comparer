@@ -1,2 +1,6 @@
+x = None
 
-print(1+int(None))
+if x is not None and x > 0:
+    print("Hi")
+
+print(x is not None)

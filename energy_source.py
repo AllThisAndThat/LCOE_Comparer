@@ -7,6 +7,7 @@ Content: EnergySource
 Description: Store class to handle energy source properties
 """
 
+import sys
 import matplotlib.pyplot as plt
 
 class EnergySource:
@@ -32,30 +33,65 @@ class EnergySource:
     Industry_I = 5
     Industry_N = 20
 
+    BTU_PER_KWH = 3412.14148
+    HOURS_PER_YEAR = 8760
+    KWH_PER_MWH = 1000
+    MMBTU_PER_BTU = 1e6
+
     def __init__(self, *, name='No Name', capacity=None, 
         capacity_factor=None, interest=Industry_I, 
         year_num=Industry_N, capital_cost=None, f_o_and_m=None,
         v_o_and_m=None, fuel_cost=None, heat_rate=None):
-        """Set variables and derive properties."""
-        self.name = name
-        
-        self.capacity = capacity
-        self.capacity_factor = capacity_factor
+        """Set and check variables and derive properties."""
+        try:
+            if type(name) != str:
+                self.name = str(name)
+                raise ValueError("Please enter a string "
+                "for the name.")
+            self.name = name
 
-        self.i = interest / 100
-        self.n = year_num
+            if (capacity is not None) and (capacity < 0):
+                raise ValueError("Capacity must be a "
+                "positive number")
+            self.capacity = capacity
+            if ((capacity_factor is not None)  
+                and not (0 < capacity_factor < 1)):
+                raise ValueError("Capacity_factor should be "
+                "between 0 and 1.")
+            self.capacity_factor = capacity_factor
 
-        self.capital_cost = capital_cost
-        self.f_o_and_m = f_o_and_m
-        self.v_o_and_m = v_o_and_m
+            if (interest < 0):
+                raise ValueError("Interest should be a "
+                "positive number.")
+            self.i = interest / 100
+            if year_num < 0:
+                raise ValueError("year_num should be a "
+                "positive number.")
+            self.n = year_num
 
-        self.fuel_cost = fuel_cost
-        self.heat_rate = heat_rate
+            self.capital_cost = capital_cost
+            self.f_o_and_m = f_o_and_m
+            self.v_o_and_m = v_o_and_m
 
-        self.calc_CRF()
-        self.calc_LCOE()
+            self.fuel_cost = fuel_cost
+            if ((heat_rate is not None) 
+                and (heat_rate < EnergySource.BTU_PER_KWH)):
+                raise ValueError(f"heat_rate must exceed "
+                f"{EnergySource.BTU_PER_KWH} BTU/KWH "
+                f"(perfect efficiency).")
+            self.heat_rate = heat_rate
 
-        EnergySource.num_of_sources += 1
+            self.calc_CRF()
+            self.calc_LCOE()
+
+            EnergySource.num_of_sources += 1
+
+        except ValueError as err:
+            print('-' * 70)
+            print("ERROR:")
+            print(f"Instance Name: {self.name}")
+            print(err)
+            sys.exit()
 
     def calc_CRF(self):
         """Calculate the CRF based on interest and annuity."""
@@ -73,10 +109,6 @@ class EnergySource:
 
         LCOE_kWh ($/kWh) and LCOE ($/MWh)
         """
-        HOURS_PER_YEAR = 8760
-        KWH_PER_MWH = 1000
-        MMBTU_PER_BTU = 1e6
-
         if self.capital_cost == None:
             self.capital_term = 0
         elif self.CRF == None:
@@ -84,8 +116,10 @@ class EnergySource:
         elif self.capacity_factor == None:
             self.capital_term = 0
         else:
+            
             self.capital_term = ((self.capital_cost * self.CRF) 
-                / (HOURS_PER_YEAR * self.capacity_factor))
+                / (EnergySource.HOURS_PER_YEAR 
+                * self.capacity_factor))
     
         if self.f_o_and_m == None:
             self.fixed_term = 0
@@ -93,32 +127,35 @@ class EnergySource:
             self.fixed_term = 0
         else:
             self.fixed_term = (self.f_o_and_m 
-                / (HOURS_PER_YEAR * self.capacity_factor))
+                / (EnergySource.HOURS_PER_YEAR 
+                * self.capacity_factor))
 
         if self.v_o_and_m == None:
             self.variable_term = 0
         else:
-            self.variable_term = self.v_o_and_m / KWH_PER_MWH
+            self.variable_term = (self.v_o_and_m 
+                / EnergySource.KWH_PER_MWH)
 
         if self.fuel_cost == None:
             self.fuel_term = 0
         elif self.heat_rate == None:
             self.fuel_term = 0
         else:
-            self.fuel_term = (self.fuel_cost / MMBTU_PER_BTU
-            * self.heat_rate)
+            self.fuel_term = (self.fuel_cost 
+            / EnergySource.MMBTU_PER_BTU * self.heat_rate)
 
         self.LCOE_kWh = (self.capital_term 
             + self.fixed_term 
             + self.variable_term
             + self.fuel_term)
-        self.LCOE = self.LCOE_kWh * KWH_PER_MWH
+        self.LCOE = self.LCOE_kWh * EnergySource.KWH_PER_MWH
 
     def print_info(self):
         """Print general information of source."""
         print('-' * 70)
-        print(f"General Information of '{self.name}' source")
-        print(f"Capacity: {self.capacity} MW")
+        print(f"General Information of '{self.name}' source:")
+        if self.capacity != None:
+            print(f"Capacity: {self.capacity} MW")
         print(f"Used capital recovery factor: {round(self.CRF, 3)}")
         print(f"Levelized Cost ${round(self.LCOE, 2)}/MWh")
         print('-' * 70)
@@ -126,18 +163,23 @@ class EnergySource:
     def print_power_info(self):
         """Print power properties of source."""
         print('-' * 70)
-        print(f"Power Information of '{self.name}' source")
-        print(f"Total capacity: {self.capacity} MW")
-        print(f"Capacity factor: {self.capacity_factor}")
-        print(f"Actual average power: "
-            f"{round(self.capacity * self.capacity_factor, 2)} MW")
+        print(f"Power information of '{self.name}' source:")
+        if self.capacity != None:
+            print(f"Total capacity: {self.capacity} MW")
+        if self.capacity_factor != None:
+            print(f"Capacity factor: {self.capacity_factor}")
+        if self.capacity != None and self.capacity_factor != None:
+            print(f"Actual average power: "
+                f"{round(self.capacity * self.capacity_factor, 2)} MW")
+        else:
+            print("This source doesn't have power information.")
         print('-' * 70)
 
     def print_cost_distribution_info(self, *, graph=False):
         """Present different costs of a source. Graph as option."""
         print('-' * 70)
-        print(f"Cost Distribution Information of "
-            f"'{self.name}' source")
+        print(f"Cost distribution information of "
+            f"'{self.name}' source:")
         try:
             print(f"Capital: "
                 f"{round((self.capital_term / self.LCOE_kWh) * 100, 2)}%")
@@ -178,7 +220,7 @@ class EnergySource:
     def print_fuel_info(self):
         """Print fuel properties of source."""
         print('-' * 70)
-        print(f"Fuel Information of '{self.name}' source")
+        print(f"Fuel information of '{self.name}' source:")
         if self.fuel_cost:
             print(f"Fuel Cost: ${self.fuel_cost}/mmBTU")
         if self.heat_rate:
@@ -189,14 +231,20 @@ class EnergySource:
 
     def print_efficiency_info(self):
         """Print efficiency properties of source."""
-        BTU_PER_KWH = 3412.14148
-
         print('-' * 70)
-        print(f"Efficiency Information of '{self.name}' source")
+        print(f"Efficiency information of '{self.name}' source:")
         if self.heat_rate:
             print(f"Heat Rate: {self.heat_rate} BTU/kWh")
             print(f"Efficiency: "
-                f"{round((BTU_PER_KWH / self.heat_rate) * 100, 2)}%")
+                f"{round((EnergySource.BTU_PER_KWH / self.heat_rate) * 100, 2)}%")
         else:
             print("This source doesn't have efficiency information.")
         print('-' * 70)
+
+    def print_all(self):
+        """Print all print fmethods for a source."""
+        self.print_info()
+        self.print_power_info()
+        self.print_cost_distribution_info()
+        self.print_fuel_info()
+        self.print_efficiency_info()

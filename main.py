@@ -7,17 +7,14 @@ Description: To explore different energy sources and which can be
 used to meet demand given constraints
 
 TO-DO:
-- Add a print all sources function
-- Add a print all parameters method
-- Add GUI for data
-- Add Gui to enter data
 - Graph a hypothetical demand curve
 - Add a carbon tax
 - Add government subsidies
 - Add a land tax
 - Compare different sources
-- Update test code
 - Adapt style standard
+- Add GUI for data
+- Add Gui to enter data
 """
 
 from energy_source import EnergySource

@@ -51,7 +51,7 @@ empty_test = {
 }
 
 zero_test = {
-    'name': 1,
+    'name': "Zero",
     'capital_cost': 0,
     'f_o_and_m': 0,
     'v_o_and_m': 0,

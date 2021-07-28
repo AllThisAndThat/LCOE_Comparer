@@ -23,9 +23,9 @@ def main():
     # empty_test_source.print_all()
     # zero_test_source.print_all()
 
-    # coal_plant.print_cost_distribution_info(graph=True)
+    coal_plant.print_cost_distribution_info(graph=True)
     # natural_gas_plant.print_cost_distribution_info(graph=True)
-    # onshore_wind_farm.print_cost_distribution_info(graph=True)
+    onshore_wind_farm.print_cost_distribution_info(graph=True)
     # min_test_source.print_cost_distribution_info(graph=True)
     # empty_test_source.print_cost_distribution_info(graph=True)
 

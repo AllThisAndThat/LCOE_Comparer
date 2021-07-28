@@ -30,6 +30,8 @@ class EnergySource:
     heat_rate - measure of efficiency (BTU/kWh)
     co2_rate - measure of Co2 max per energy produced (kg-Co2/mmBTU)
     co2_tax - cost per mass of Co2 produced from source ($/kg-Co2)
+    land_rate - measure of power density of land (W/m^2)
+    land_tax - cost per unit area of land ($/m^2)
     """
     instances = []
 
@@ -41,12 +43,13 @@ class EnergySource:
     KWH_PER_MWH = 1000
     MMBTU_PER_BTU = 1e6
     KWH_PER_MMBTU = 293.07107
+    KW_PER_W = 1e-3
 
     def __init__(self, *, name='No Name', capacity=None, 
         capacity_factor=None, interest=INDUSTRY_I, 
         year_num=INDUSTRY_N, capital_cost=None, f_o_and_m=None,
         v_o_and_m=None, fuel_cost=None, heat_rate=None, 
-        co2_rate = None, co2_tax = None):
+        co2_rate=None, co2_tax=None, land_rate=None, land_tax=None):
         """Set and check variables and derive properties."""
         try:
             if type(name) != str:
@@ -92,6 +95,12 @@ class EnergySource:
             self.co2_rate = co2_rate
             self.co2_tax = co2_tax
 
+            if (land_rate is not None) and (land_rate <= 0):
+                raise ValueError("land_rate must be a "
+                "positive number")
+            self.land_rate = land_rate
+            self.land_tax = land_tax
+
             self.calc_CRF()
             self.calc_LCOE()
             self.calc_efficiency()
@@ -127,6 +136,7 @@ class EnergySource:
         variable_term - variable O&M after conversion ($/kWh)
         fuel_term - fuel cost after conversion ($/kWh)
         co2_tax_term - co2 tax after conversion ($/kWh)
+        land_tax_term - land tax after conversion ($/kWh)
 
         LCOE_kWh ($/kWh) and LCOE ($/MWh)
         """
@@ -172,12 +182,22 @@ class EnergySource:
         else:
             self.co2_tax_term = ((self.co2_rate * self.co2_tax) 
                 / EnergySource.KWH_PER_MMBTU)
+        
+        if self.land_rate == None:
+            self.land_tax_term = 0
+        elif self.land_tax == None:
+            self.land_tax_term = 0
+        else:
+            self.land_tax_term = ((self.land_tax * self.CRF) 
+                / (EnergySource.HOURS_PER_YEAR 
+                * (self.land_rate * EnergySource.KW_PER_W)))
 
         self.LCOE_kWh = (self.capital_term 
             + self.fixed_term 
             + self.variable_term
             + self.fuel_term
-            + self.co2_tax_term)
+            + self.co2_tax_term
+            + self.land_tax_term)
         self.LCOE = self.LCOE_kWh * EnergySource.KWH_PER_MWH
 
     def print_all(self):
@@ -204,6 +224,8 @@ class EnergySource:
                 f"{round((self.fuel_term / self.LCOE_kWh) * 100, 2)}%")
             print(f"Co2 Tax: "
                 f"{round((self.co2_tax_term / self.LCOE_kWh) * 100, 2)}%")
+            print(f"Land Tax: "
+                f"{round((self.land_tax_term / self.LCOE_kWh) * 100, 2)}%")
         except ZeroDivisionError:
             if graph: print("No Data to Graph")
         print(f"Total LCOE: ${round(self.LCOE, 2)}/MWh")
@@ -227,8 +249,11 @@ class EnergySource:
             if self.co2_tax_term:
                 labels.append('Co2 Tax')
                 sizes.append(self.co2_tax_term)
+            if self.land_tax_term:
+                labels.append('Land Tax')
+                sizes.append(self.land_tax_term)
             colors = ['orange', 'yellowgreen', 'lightcoral',
-                'lightblue', 'firebrick']
+                'lightblue', 'firebrick', 'lightslategrey']
             plt.pie(sizes, colors=colors, autopct='%1.1f%%',
                 pctdistance=1.15, startangle=140, normalize=True)
             plt.legend(labels, loc="best")
@@ -268,6 +293,10 @@ class EnergySource:
         print(f"General information of '{self.name}' source:")
         if self.capacity != None:
             print(f"Capacity: {self.capacity} MW")
+        if self.co2_rate != None:
+            print(f"Co2 Rate: {self.co2_rate} Co2-kg/mmBTU")
+        if self.land_rate != None:
+            print(f"Land Rate: {self.land_rate} W/m^2")
         print(f"Used capital recovery factor: {round(self.CRF, 3)}")
         print(f"Levelized Cost ${round(self.LCOE, 2)}/MWh")
         print('-' * 70)
@@ -312,6 +341,14 @@ class EnergySource:
             print(f"Co2 Tax: {self.co2_tax}")
         else:
             print(f"Co2 Tax: ${self.co2_tax}/kg-Co2")
+        if self.land_rate == None:
+            print(f"Land Rate: {self.land_rate}")
+        else:
+            print(f"Land Rate: {self.land_rate} W/m^2")
+        if self.land_tax == None:
+            print(f"Land Tax: {self.land_tax}")
+        else:
+            print(f"Land Tax: ${self.land_tax}/m^2")
         print('-' * 70)
 
     def print_power_info(self):

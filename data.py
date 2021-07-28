@@ -18,7 +18,9 @@ coal = {
     'capacity': 650,
     'capacity_factor': 0.475,
     'co2_rate': 95.23,
-    'co2_tax': 0.005
+    'co2_tax': 0.005,
+    'land_rate': 1000,
+    'land_tax': 10
 }
 
 natural_gas = {
@@ -39,7 +41,9 @@ onshore_wind = {
     'capital_cost': 1877,
     'f_o_and_m': 39.7,
     'capacity': 100,
-    'capacity_factor': 0.348    
+    'capacity_factor': 0.348,
+    'land_rate': 15,
+    'land_tax': 10    
 }
 
 min_test = {

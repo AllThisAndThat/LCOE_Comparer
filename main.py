@@ -8,7 +8,6 @@ used to meet demand given constraints
 
 TO-DO:
 - Graph a hypothetical demand curve
-- Add a carbon tax
 - Add government subsidies
 - Add a land tax
 - Compare different sources

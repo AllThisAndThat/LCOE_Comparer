@@ -1,6 +1,6 @@
-x = None
+myList = [None]
 
-if x is not None and x > 0:
-    print("Hi")
-
-print(x is not None)
+if None not in myList:
+    print("Some")
+else:
+    print("None")

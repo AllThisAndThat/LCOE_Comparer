@@ -28,21 +28,25 @@ class EnergySource:
     num_of_sources - recond of instances
     fuel_cost - cost of fuel for source ($/mmBTU)
     heat_rate - measure of efficiency (BTU/kWh)
+    co2_rate - measure of Co2 max per energy produced (kg-Co2/mmBTU)
+    co2_tax - cost per mass of Co2 produced from source ($/kg-Co2)
     """
     instances = []
 
-    Industry_I = 5
-    Industry_N = 20
+    INDUSTRY_I = 5
+    INDUSTRY_N = 20
 
     BTU_PER_KWH = 3412.14148
     HOURS_PER_YEAR = 8760
     KWH_PER_MWH = 1000
     MMBTU_PER_BTU = 1e6
+    KWH_PER_MMBTU = 293.07107
 
     def __init__(self, *, name='No Name', capacity=None, 
-        capacity_factor=None, interest=Industry_I, 
-        year_num=Industry_N, capital_cost=None, f_o_and_m=None,
-        v_o_and_m=None, fuel_cost=None, heat_rate=None):
+        capacity_factor=None, interest=INDUSTRY_I, 
+        year_num=INDUSTRY_N, capital_cost=None, f_o_and_m=None,
+        v_o_and_m=None, fuel_cost=None, heat_rate=None, 
+        co2_rate = None, co2_tax = None):
         """Set and check variables and derive properties."""
         try:
             if type(name) != str:
@@ -82,6 +86,12 @@ class EnergySource:
                 f"(perfect efficiency).")
             self.heat_rate = heat_rate
 
+            if (co2_rate is not None) and (co2_rate < 0):
+                raise ValueError("co2_rate must be a "
+                "positive number")
+            self.co2_rate = co2_rate
+            self.co2_tax = co2_tax
+
             self.calc_CRF()
             self.calc_LCOE()
             self.calc_efficiency()
@@ -116,6 +126,7 @@ class EnergySource:
         fixed_term - fixed O&M after conversion ($/kWh)
         variable_term - variable O&M after conversion ($/kWh)
         fuel_term - fuel cost after conversion ($/kWh)
+        co2_tax_term - co2 tax after conversion ($/kWh)
 
         LCOE_kWh ($/kWh) and LCOE ($/MWh)
         """
@@ -154,10 +165,19 @@ class EnergySource:
             self.fuel_term = (self.fuel_cost 
             / EnergySource.MMBTU_PER_BTU * self.heat_rate)
 
+        if self.co2_rate == None:
+            self.co2_tax_term = 0;
+        elif self.co2_tax == None:
+            self.co2_tax_term = 0;
+        else:
+            self.co2_tax_term = ((self.co2_rate * self.co2_tax) 
+                / EnergySource.KWH_PER_MMBTU)
+
         self.LCOE_kWh = (self.capital_term 
             + self.fixed_term 
             + self.variable_term
-            + self.fuel_term)
+            + self.fuel_term
+            + self.co2_tax_term)
         self.LCOE = self.LCOE_kWh * EnergySource.KWH_PER_MWH
 
     def print_all(self):
@@ -182,6 +202,8 @@ class EnergySource:
                 f"{round((self.variable_term / self.LCOE_kWh) * 100, 2)}%")
             print(f"Fuel: "
                 f"{round((self.fuel_term / self.LCOE_kWh) * 100, 2)}%")
+            print(f"Co2 Tax: "
+                f"{round((self.co2_tax_term / self.LCOE_kWh) * 100, 2)}%")
         except ZeroDivisionError:
             if graph: print("No Data to Graph")
         print(f"Total LCOE: ${round(self.LCOE, 2)}/MWh")
@@ -202,8 +224,11 @@ class EnergySource:
             if self.fuel_term:
                 labels.append('Fuel')
                 sizes.append(self.fuel_term)
+            if self.co2_tax_term:
+                labels.append('Co2 Tax')
+                sizes.append(self.co2_tax_term)
             colors = ['orange', 'yellowgreen', 'lightcoral',
-                'lightblue']
+                'lightblue', 'firebrick']
             plt.pie(sizes, colors=colors, autopct='%1.1f%%',
                 pctdistance=1.15, startangle=140, normalize=True)
             plt.legend(labels, loc="best")
@@ -226,18 +251,21 @@ class EnergySource:
         """Print fuel properties of source."""
         print('-' * 70)
         print(f"Fuel information of '{self.name}' source:")
-        if self.fuel_cost:
-            print(f"Fuel Cost: ${self.fuel_cost}/mmBTU")
-        if self.heat_rate:
-            print(f"Heat Rate: {self.heat_rate} BTU/kWh")
-        if not self.fuel_cost or not self.heat_rate:
+        if None not in [self.fuel_cost, self.heat_rate, self.co2_rate]:
+            if self.fuel_cost:
+                print(f"Fuel Cost: ${self.fuel_cost}/mmBTU")
+            if self.heat_rate:
+                print(f"Heat Rate: {self.heat_rate} BTU/kWh")
+            if self.co2_rate:
+                print(f"Co2 Rate: {self.co2_rate} kg-Co2/mmBTU")
+        else:
             print("This source doesn't have fuel information.")
         print('-' * 70)
 
     def print_info(self):
         """Print general information of source."""
         print('-' * 70)
-        print(f"General Information of '{self.name}' source:")
+        print(f"General information of '{self.name}' source:")
         if self.capacity != None:
             print(f"Capacity: {self.capacity} MW")
         print(f"Used capital recovery factor: {round(self.CRF, 3)}")
@@ -263,11 +291,11 @@ class EnergySource:
         if self.f_o_and_m == None:
             print(f"Fixed O&M: {self.f_o_and_m}")
         else:
-            print(f"Fixed O&M: ${self.f_o_and_m}/kWh")
+            print(f"Fixed O&M: ${self.f_o_and_m}/kWh-yr")
         if self.v_o_and_m == None:
             print(f"Variable O&M: {self.v_o_and_m}")
         else:
-            print(f"Variable O&M: ${self.v_o_and_m}/kWh")
+            print(f"Variable O&M: ${self.v_o_and_m}/MWh")
         if self.fuel_cost == None:
             print(f"Fuel Cost: {self.fuel_cost}")
         else:
@@ -276,6 +304,14 @@ class EnergySource:
             print(f"Heat Rate: {self.heat_rate}")
         else:
             print(f"Heat Rate: {self.heat_rate} BTU/kWh")
+        if self.co2_rate == None:
+            print(f"Co2 Rate: {self.co2_rate}")
+        else:
+            print(f"Co2 Rate: {self.co2_rate} kg-Co2/mmBTU")
+        if self.co2_tax == None:
+            print(f"Co2 Tax: {self.co2_tax}")
+        else:
+            print(f"Co2 Tax: ${self.co2_tax}/kg-Co2")
         print('-' * 70)
 
     def print_power_info(self):

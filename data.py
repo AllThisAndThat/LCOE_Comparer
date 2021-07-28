@@ -16,7 +16,9 @@ coal = {
     'fuel_cost': 1.95,
     'heat_rate': 8800,
     'capacity': 650,
-    'capacity_factor': 0.475
+    'capacity_factor': 0.475,
+    'co2_rate': 95.23,
+    'co2_tax': 0.005
 }
 
 natural_gas = {

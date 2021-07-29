@@ -17,15 +17,15 @@ def main():
     # zero_test_source.print_input_properties() 
 
     # coal_plant.print_all()
-    # natural_gas_plant.print_all()
+    natural_gas_plant.print_all()
     # onshore_wind_farm.print_all()
     # min_test_source.print_all()
     # empty_test_source.print_all()
     # zero_test_source.print_all()
 
-    coal_plant.print_cost_distribution_info(graph=True)
+    # coal_plant.print_cost_distribution_info(graph=True)
     # natural_gas_plant.print_cost_distribution_info(graph=True)
-    onshore_wind_farm.print_cost_distribution_info(graph=True)
+    # onshore_wind_farm.print_cost_distribution_info(graph=True)
     # min_test_source.print_cost_distribution_info(graph=True)
     # empty_test_source.print_cost_distribution_info(graph=True)
 

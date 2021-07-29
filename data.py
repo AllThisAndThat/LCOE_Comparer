@@ -20,7 +20,8 @@ coal = {
     'co2_rate': 95.23,
     'co2_tax': 0.005,
     'land_rate': 1000,
-    'land_tax': 10
+    'land_tax': 10,
+    'subsidy': 0.001
 }
 
 natural_gas = {

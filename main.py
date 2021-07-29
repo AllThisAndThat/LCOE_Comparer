@@ -8,12 +8,12 @@ used to meet demand given constraints
 
 TO-DO:
 - Graph a hypothetical demand curve
-- Add government subsidies
-- Add a land tax
 - Compare different sources
 - Adapt style standard
 - Add GUI for data
 - Add Gui to enter data
+- Update test program
+- Add sources to data with realistic values
 """
 
 from energy_source import EnergySource

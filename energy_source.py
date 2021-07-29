@@ -32,6 +32,7 @@ class EnergySource:
     co2_tax - cost per mass of Co2 produced from source ($/kg-Co2)
     land_rate - measure of power density of land (W/m^2)
     land_tax - cost per unit area of land ($/m^2)
+    subsidy - external value for type of source ($/kWh)
     """
     instances = []
 
@@ -49,7 +50,8 @@ class EnergySource:
         capacity_factor=None, interest=INDUSTRY_I, 
         year_num=INDUSTRY_N, capital_cost=None, f_o_and_m=None,
         v_o_and_m=None, fuel_cost=None, heat_rate=None, 
-        co2_rate=None, co2_tax=None, land_rate=None, land_tax=None):
+        co2_rate=None, co2_tax=None, land_rate=None, land_tax=None,
+        subsidy=None):
         """Set and check variables and derive properties."""
         try:
             if type(name) != str:
@@ -60,21 +62,21 @@ class EnergySource:
 
             if (capacity is not None) and (capacity < 0):
                 raise ValueError("Capacity must be a "
-                "positive number")
+                "non-negative number.")
             self.capacity = capacity
             if ((capacity_factor is not None)  
                 and not (0 < capacity_factor < 1)):
-                raise ValueError("Capacity_factor should be "
+                raise ValueError("Capacity_factor must be "
                 "between 0 and 1.")
             self.capacity_factor = capacity_factor
 
             if (interest < 0):
-                raise ValueError("Interest should be a "
-                "positive number.")
+                raise ValueError("Interest must be a "
+                "non-negative number.")
             self.i = interest / 100
             if year_num < 0:
-                raise ValueError("year_num should be a "
-                "positive number.")
+                raise ValueError("year_num must be a "
+                "non-negative number.")
             self.n = year_num
 
             self.capital_cost = capital_cost
@@ -91,15 +93,20 @@ class EnergySource:
 
             if (co2_rate is not None) and (co2_rate < 0):
                 raise ValueError("co2_rate must be a "
-                "positive number")
+                "non-negative number.")
             self.co2_rate = co2_rate
             self.co2_tax = co2_tax
 
             if (land_rate is not None) and (land_rate <= 0):
                 raise ValueError("land_rate must be a "
-                "positive number")
+                "positive number.")
             self.land_rate = land_rate
             self.land_tax = land_tax
+
+            if (subsidy is not None) and (subsidy < 0):
+                raise ValueError("subsidy must be a "
+                "non-negative number.")
+            self.subsidy = subsidy
 
             self.calc_CRF()
             self.calc_LCOE()
@@ -137,6 +144,7 @@ class EnergySource:
         fuel_term - fuel cost after conversion ($/kWh)
         co2_tax_term - co2 tax after conversion ($/kWh)
         land_tax_term - land tax after conversion ($/kWh)
+        subsidy_term - external subsidy for source ($/kWh)
 
         LCOE_kWh ($/kWh) and LCOE ($/MWh)
         """
@@ -191,13 +199,19 @@ class EnergySource:
             self.land_tax_term = ((self.land_tax * self.CRF) 
                 / (EnergySource.HOURS_PER_YEAR 
                 * (self.land_rate * EnergySource.KW_PER_W)))
+        
+        if self.subsidy == None:
+            self.subsidy_term = 0
+        else:
+            self.subsidy_term = -self.subsidy
 
         self.LCOE_kWh = (self.capital_term 
             + self.fixed_term 
             + self.variable_term
             + self.fuel_term
             + self.co2_tax_term
-            + self.land_tax_term)
+            + self.land_tax_term
+            + self.subsidy_term)
         self.LCOE = self.LCOE_kWh * EnergySource.KWH_PER_MWH
 
     def print_all(self):
@@ -213,19 +227,16 @@ class EnergySource:
         print('-' * 70)
         print(f"Cost distribution information of "
             f"'{self.name}' source:")
+        term_names = ['Capital', 'Fixed', 'Variable', 'Fuel',
+            'Co2 Tax', 'Land Tax', 'Subsidy']
+        terms = [self.capital_term, self.fixed_term,
+            self.variable_term, self.fuel_term,
+            self.co2_tax_term ,self.land_tax_term, self.subsidy_term]
         try:
-            print(f"Capital: "
-                f"{round((self.capital_term / self.LCOE_kWh) * 100, 2)}%")
-            print(f"Fixed: "
-                f"{round((self.fixed_term / self.LCOE_kWh) * 100, 2)}%")
-            print(f"Variable: "
-                f"{round((self.variable_term / self.LCOE_kWh) * 100, 2)}%")
-            print(f"Fuel: "
-                f"{round((self.fuel_term / self.LCOE_kWh) * 100, 2)}%")
-            print(f"Co2 Tax: "
-                f"{round((self.co2_tax_term / self.LCOE_kWh) * 100, 2)}%")
-            print(f"Land Tax: "
-                f"{round((self.land_tax_term / self.LCOE_kWh) * 100, 2)}%")
+            for term_name, term in zip(term_names, terms):
+                print(f"{term_name}: |"
+                    f" ${round(term * 1e3, 2)}/MWh |"
+                    f" {round((term / self.LCOE_kWh) * 100, 2)}%")
         except ZeroDivisionError:
             if graph: print("No Data to Graph")
         print(f"Total LCOE: ${round(self.LCOE, 2)}/MWh")
@@ -234,24 +245,11 @@ class EnergySource:
         if graph and self.LCOE:
             labels = []
             sizes = []
-            if self.capital_term:
-                labels.append('Capital')
-                sizes.append(self.capital_term)
-            if self.fixed_term:
-                labels.append('Fixed')
-                sizes.append(self.fixed_term)
-            if self.variable_term:
-                labels.append('Variable')
-                sizes.append(self.variable_term)
-            if self.fuel_term:
-                labels.append('Fuel')
-                sizes.append(self.fuel_term)
-            if self.co2_tax_term:
-                labels.append('Co2 Tax')
-                sizes.append(self.co2_tax_term)
-            if self.land_tax_term:
-                labels.append('Land Tax')
-                sizes.append(self.land_tax_term)
+            for term_name, term in zip(term_names, terms):
+                if (term) and (term > 0):
+                    labels.append(term_name)
+                    sizes.append(term)
+            
             colors = ['orange', 'yellowgreen', 'lightcoral',
                 'lightblue', 'firebrick', 'lightslategrey']
             plt.pie(sizes, colors=colors, autopct='%1.1f%%',
@@ -276,14 +274,14 @@ class EnergySource:
         """Print fuel properties of source."""
         print('-' * 70)
         print(f"Fuel information of '{self.name}' source:")
-        if None not in [self.fuel_cost, self.heat_rate, self.co2_rate]:
-            if self.fuel_cost:
-                print(f"Fuel Cost: ${self.fuel_cost}/mmBTU")
-            if self.heat_rate:
-                print(f"Heat Rate: {self.heat_rate} BTU/kWh")
-            if self.co2_rate:
-                print(f"Co2 Rate: {self.co2_rate} kg-Co2/mmBTU")
-        else:
+        if self.fuel_cost:
+            print(f"Fuel Cost: ${self.fuel_cost}/mmBTU")
+        if self.heat_rate:
+            print(f"Heat Rate: {self.heat_rate} BTU/kWh")
+        if self.co2_rate:
+            print(f"Co2 Rate: {self.co2_rate} kg-Co2/mmBTU")
+        temp_list = [self.fuel_cost, self.heat_rate, self. co2_rate]
+        if temp_list.count(None) == len(temp_list):
             print("This source doesn't have fuel information.")
         print('-' * 70)
 
@@ -297,6 +295,8 @@ class EnergySource:
             print(f"Co2 Rate: {self.co2_rate} Co2-kg/mmBTU")
         if self.land_rate != None:
             print(f"Land Rate: {self.land_rate} W/m^2")
+        if self.subsidy != None:
+            print(f"Subsidy: ${self.subsidy}/kwh")
         print(f"Used capital recovery factor: {round(self.CRF, 3)}")
         print(f"Levelized Cost ${round(self.LCOE, 2)}/MWh")
         print('-' * 70)
@@ -328,7 +328,7 @@ class EnergySource:
         if self.fuel_cost == None:
             print(f"Fuel Cost: {self.fuel_cost}")
         else:
-            print(f"Fuel Cost: ${self.fuel_cost}/kWh")
+            print(f"Fuel Cost: ${self.fuel_cost}/mmBTU")
         if self.heat_rate == None:
             print(f"Heat Rate: {self.heat_rate}")
         else:
@@ -349,6 +349,10 @@ class EnergySource:
             print(f"Land Tax: {self.land_tax}")
         else:
             print(f"Land Tax: ${self.land_tax}/m^2")
+        if self.subsidy == None:
+            print(f"Subsidy: {self.subsidy}")
+        else:
+            print(f"Subsidy: ${self.subsidy}/kWh")
         print('-' * 70)
 
     def print_power_info(self):

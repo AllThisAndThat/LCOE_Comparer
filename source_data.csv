@@ -1,0 +1,6 @@
+﻿name,interest,year_num,capital_cost,f_o_and_m,v_o_and_m,fuel_cost,heat_rate,capacity,capacity_factor,co2_rate,co2_tax,land_rate,land_tax,subsidy
+Coal,,,3636,42.1,4.6,2,8800,650,0.475,,,,,
+Natural Gas,,,978,11,3.5,4,6600,702,0.568,,,,,
+Advanced Nuclear,,,2234,100.28,2.3,1,10450,2234,0.935,,,,,
+Onshore Wind,,,1877,39.7,,,,100,0.348,,,,,
+Rooftop Solar PV,,,2671,23.4,,,,20,0.245,,,,,

@@ -17,15 +17,10 @@ TO-DO:
 """
 
 from energy_source import EnergySource
-import data
+import data_csv
 
 def main():
-    coal_plant = EnergySource(**data.coal)
-    natural_gas_plant = EnergySource(**data.natural_gas)
-    onshore_wind_farm = EnergySource(**data.onshore_wind)
-
-    # EnergySource.Print_num_sources()
-
+    pass
 
 if __name__ == "__main__":
     main()

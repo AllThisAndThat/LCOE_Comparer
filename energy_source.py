@@ -4,7 +4,7 @@ Summer 2021
 Project Name: Demand 2050
 File: energy_source.py (class)
 Content: EnergySource
-Description: Store class to handle energy source properties
+Description: Store class to handle energy source properties.
 """
 
 import sys
@@ -17,7 +17,7 @@ class EnergySource:
     Attributes:
     interest - the interest or discount rate as a percentage
     i - the interest as a decimal
-    year_num and n - lifetime of powerplant
+    year_num and n - lifetime of investment
     CRF - capital recovery factor (1/yr)
     capital_cost - initial cost for a given capacity ($/kW)
     f_o_and_m - fixed operation and maintaince cost ($/kW-yr)
@@ -39,11 +39,14 @@ class EnergySource:
     INDUSTRY_I = 5
     INDUSTRY_N = 20
 
-    BTU_PER_KWH = 3412.14148
+    # Time Conversions
     HOURS_PER_YEAR = 8760
+    # Energy Conversions
+    BTU_PER_KWH = 3412.14148
     KWH_PER_MWH = 1000
     MMBTU_PER_BTU = 1e6
     KWH_PER_MMBTU = 293.07107
+    # Power Conversions
     KW_PER_W = 1e-3
 
     def __init__(self, *, name='No Name', capacity=None, 
@@ -155,7 +158,6 @@ class EnergySource:
         elif self.capacity_factor == None:
             self.capital_term = 0
         else:
-            
             self.capital_term = ((self.capital_cost * self.CRF) 
                 / (EnergySource.HOURS_PER_YEAR 
                 * self.capacity_factor))
@@ -254,6 +256,7 @@ class EnergySource:
                 'lightblue', 'firebrick', 'lightslategrey']
             plt.pie(sizes, colors=colors, autopct='%1.1f%%',
                 pctdistance=1.15, startangle=140, normalize=True)
+            plt.title(f"{self.name} Source LCOE")
             plt.legend(labels, loc="best")
             plt.axis('equal')
             plt.show()

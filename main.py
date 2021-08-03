@@ -17,7 +17,7 @@ TO-DO:
 """
 
 from energy_source import EnergySource
-import data_csv
+import data
 
 def main():
     EnergySource.set_industry(interest=8, loan_period=15)

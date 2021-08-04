@@ -35,26 +35,25 @@ class EnergySource:
     subsidy - external value for type of source ($/kWh)
     """
     instances = []
-
-    INDUSTRY_I = 5
-    INDUSTRY_N = 20
-
-    # Time Conversions
+    # Industry variables
+    industry_i = 5
+    industry_n = 20
+    co2_tax = 0
+    land_tax = 0
+    # Time conversions
     HOURS_PER_YEAR = 8760
-    # Energy Conversions
+    # Energy conversions
     BTU_PER_KWH = 3412.14148
     KWH_PER_MWH = 1000
     MMBTU_PER_BTU = 1e6
     KWH_PER_MMBTU = 293.07107
-    # Power Conversions
+    # Power conversions
     KW_PER_W = 1e-3
 
     def __init__(self, *, name='No Name', capacity=None, 
-        capacity_factor=None, interest=INDUSTRY_I, 
-        year_num=INDUSTRY_N, capital_cost=None, f_o_and_m=None,
+        capacity_factor=None, capital_cost=None, f_o_and_m=None,
         v_o_and_m=None, fuel_cost=None, heat_rate=None, 
-        co2_rate=None, co2_tax=None, land_rate=None, land_tax=None,
-        subsidy=None):
+        co2_rate=None, land_rate=None, subsidy=None):
         """Set and check variables and derive properties."""
         try:
             if type(name) != str:
@@ -73,14 +72,8 @@ class EnergySource:
                 "between 0 and 1.")
             self.capacity_factor = capacity_factor
 
-            if (interest < 0):
-                raise ValueError("Interest must be a "
-                "non-negative number.")
-            self.i = interest / 100
-            if year_num < 0:
-                raise ValueError("year_num must be a "
-                "non-negative number.")
-            self.n = year_num
+            self.i = EnergySource.industry_i / 100
+            self.n = EnergySource.industry_n
 
             self.capital_cost = capital_cost
             self.f_o_and_m = f_o_and_m
@@ -98,13 +91,11 @@ class EnergySource:
                 raise ValueError("co2_rate must be a "
                 "non-negative number.")
             self.co2_rate = co2_rate
-            self.co2_tax = co2_tax
 
             if (land_rate is not None) and (land_rate <= 0):
                 raise ValueError("land_rate must be a "
                 "positive number.")
             self.land_rate = land_rate
-            self.land_tax = land_tax
 
             if (subsidy is not None) and (subsidy < 0):
                 raise ValueError("subsidy must be a "
@@ -187,18 +178,14 @@ class EnergySource:
 
         if self.co2_rate == None:
             self.co2_tax_term = 0;
-        elif self.co2_tax == None:
-            self.co2_tax_term = 0;
         else:
-            self.co2_tax_term = ((self.co2_rate * self.co2_tax) 
+            self.co2_tax_term = ((EnergySource.co2_tax * self.co2_rate) 
                 / EnergySource.KWH_PER_MMBTU)
         
         if self.land_rate == None:
             self.land_tax_term = 0
-        elif self.land_tax == None:
-            self.land_tax_term = 0
         else:
-            self.land_tax_term = ((self.land_tax * self.CRF) 
+            self.land_tax_term = ((EnergySource.land_tax * self.CRF) 
                 / (EnergySource.HOURS_PER_YEAR 
                 * (self.land_rate * EnergySource.KW_PER_W)))
         
@@ -381,3 +368,72 @@ class EnergySource:
         for (count, instance) in enumerate(cls.instances, 1):
             print(f"{count}: {instance.name}")
         print('-' * 70)
+
+    @classmethod
+    def print_LCOE_comparison(cls):
+        """Print LCOEs for all instances in order."""
+        print('-' * 70)
+        print("LCOE for all sources:")
+        LCOES = {}
+        for instance in cls.instances:
+            LCOES[instance.LCOE] = instance.name
+        for value, key in sorted(LCOES.items()):
+            print(f"{key}: ${round(value, 2)}/MWh")
+        print('-' * 70)
+    
+    @classmethod
+    def set_co2_tax(cls, new_tax):
+        """Set the co2 tax rate for the industry."""
+        try:
+            if new_tax < 0:
+                raise ValueError("Co2 tax should be a "
+                    "non-negative number.")
+            cls.co2_tax = new_tax
+        except ValueError as err:
+            print(err)
+            sys.exit()
+
+    @classmethod
+    def set_industry(cls, *, interest, loan_period,
+        co2_tax = 0, land_tax = 0):
+        """Set industry variables."""
+        cls.set_industry_i(interest)
+        cls.set_industry_n(loan_period)
+        cls.set_co2_tax(co2_tax)
+        cls.set_land_tax(land_tax)
+
+    @classmethod
+    def set_industry_i(cls, new_i):
+        """set the interest for the industry"""
+        try:
+            if (new_i <= 0):
+                    raise ValueError("Interest must be a "
+                    "positive number.")
+            cls.industry_i = new_i
+        except ValueError as err:
+            print(err)
+            sys.exit()
+
+    @classmethod
+    def set_industry_n(cls, new_n):
+        """set the loan period for the industry."""
+        try:
+            if (new_n <= 0):
+                    raise ValueError("Loan period must be a "
+                    "positive number.")
+            cls.industry_n = new_n
+        except ValueError as err:
+            print(err)
+            sys.exit()
+
+    @classmethod
+    def set_land_tax(cls, new_tax):
+        """Set the land tax rate for the industry."""
+        try:
+            if new_tax < 0:
+                raise ValueError("Land tax should be a "
+                    "non-negative number.")
+            cls.land_tax = new_tax
+        except ValueError as err:
+            print(err)
+            sys.exit()
